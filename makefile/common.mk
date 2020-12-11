@@ -4,6 +4,7 @@
 		--platform $(PLATFORM) \
                 --profile.data all:all:all \
                 --profile.stall all:all:all \
+		-DDATA_ELEMENTS=$(DWORDS) \
 		--save-temps \
 		--temp_dir ./$(BUILDDIR)/temp_dir \
 		--report_dir ./$(BUILDDIR)/report_dir \

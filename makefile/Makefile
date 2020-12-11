@@ -3,12 +3,6 @@ TARGET := hw
 MEMTYPE := DDR
 BANKS :=
 
-
-#PLATFORM :=xilinx_u200_xdma_201830_2
-PLATFORM :=xilinx_u280_xdma_201920_3
-PLATFORM :=xilinx_u50lv_gen3x4_xdma_base_2
-PLATFORM :=xilinx_u50lv_gen3x4_xdma_2_202010_1
-
 SRCDIR := ./../reference_files
 
 ifeq ($(MEMTYPE), DDR)
@@ -17,17 +11,31 @@ else
 PLATFORM :=xilinx_u50_gen3x16_xdma_201920_3
 endif
 
-OVERLAP :=
+_OVERLAP :=
 ifeq ($(OVERLAP_BANKS),1)
-OVERLAP = _overlap
+_OVERLAP = _overlap
 endif
 
 
+ifeq ($(ADDRNDM),1)
+_ADDRNDM = _addRndm
+endif
+
+DWORDS     := 16
+_DWORDS    := _d512
+ifeq ($(DWIDTH), 256)
+DWORDS   = 8
+_DWORDS   = _d256
+endif
+ifeq ($(DWIDTH), 128)
+DWORDS   = 4
+_DWORDS   = _d128
+endif
 
 
 # Default Settings here ..
 HOST_SRC_CPP := $(SRCDIR)/host.cpp
-BUILDDIR := ./../build/$(MEMTYPE)_banks$(BANKS)$(OVERLAP)
+BUILDDIR := ./../build/$(MEMTYPE)_banks$(BANKS)$(_OVERLAP)$(_ADDRNDM)$(_DWORDS)
 
 
 # Common Source Code for FPGA and Host
