@@ -1,22 +1,28 @@
 #!/bin/bash
 
 #Define the string value
-SRC1=$1;
-SRC2=$2;
-DES=$3;
+src1=$1;
+src2=$2;
+des=$3;
+builddir=$4;
+#now=$(date +%Y%m%d%H%M%S)
+cfg_out=$builddir/HBM_tmp.cfg1
 
 # Set space as the delimiter
 IFS='_'
 
+echo " LLL $SRC1 "
+echo " LLL $cfg_out "
+echo " LLL $builddir "
+
+echo "[connectivity]" > HBM_tmp.cfg
+#echo "[connectivity]" >> $cfg_out
+
 #Read the split words into an array based on space delimiter
-read -a strarr <<< "$1"
+read -a strarr <<< $1
 
 #Count the total words
 #echo "There are ${#strarr[*]} words in the text."
-
-echo " LLL $SRC1 "
-
-echo "[connectivity]" > HBM_tmp.cfg
 
 # Print each value of the array by using the loop
 if [ ${#strarr[*]} -gt 1 ]

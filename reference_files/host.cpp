@@ -41,8 +41,7 @@ int main(int argc, char** argv)
   unsigned int krnl_loop = atoi (argv[4]);
   if ((addRandom==1) && (krnl_loop<64)) krnl_loop=64; 
 
-  long unsigned int vector_size_bytes = atoi (argv[2]) * 1024 *1024; // Converted to MB
-  long unsigned int total_data_size = vector_size_bytes/sizeof(int) ; // Convert to Meg
+  long unsigned int vector_size_bytes = (long unsigned int)atoi (argv[2])<<20; // Converted to MB
 
   cl_int err;
   unsigned fileBufSize;
@@ -51,22 +50,29 @@ int main(int argc, char** argv)
   /* Reducing the data size for emulation mode */
   char *xcl_mode = getenv("XCL_EMULATION_MODE");
   if (xcl_mode != NULL) {
-     vector_size_bytes = 1024 * sizeof(uint);
-     addRandom=1;
+      std::cout << "** operating in HW EMU ** we are changing some values given as args to make the emulation run shorter and faster!" 
+          << std::endl;
+     vector_size_bytes = 16 * 1024;
+//     addRandom=1;
      krnl_loop=1;	
   }
+  
+  long unsigned int total_data_size = vector_size_bytes/sizeof(int) ; // Convert to number of integer words
+
+  printf("\n Total Data of %2.3f Mbytes to be written to global memory from host\n ", (float) vector_size_bytes/1024/1024);
+  printf("\n Kernel is invoked %zu time and repeats itself %d times \n\n", numIter, krnl_loop);
 
   // Allocate Memory in Host Memory
   std::vector<int,aligned_allocator<int>> source_in1(total_data_size);
   std::vector<int,aligned_allocator<int>> source_in2(total_data_size);
   std::vector<int,aligned_allocator<int>> source_hw_results(total_data_size);
-  std::vector<int,aligned_allocator<int>> source_sw_results(total_data_size);
+//  std::vector<int,aligned_allocator<int>> source_sw_results(total_data_size);
 
   // Create the test data 
   for(long unsigned int i = 0 ; i < total_data_size ; i++){
-     source_in1[i] = rand() % total_data_size;
-     source_in2[i] = rand() % total_data_size;
-     source_sw_results[i] = source_in1[i] + source_in2[i];
+     source_in1[i] = rand() ;//% total_data_size;
+     source_in2[i] = rand() ;//% total_data_size;
+//     source_sw_results[i] = source_in1[i] + source_in2[i];
      source_hw_results[i] = 0;
   }
 
@@ -103,6 +109,7 @@ int main(int argc, char** argv)
 // Step 1: Create the program object from the binary and program the FPGA device with it
 // -------------------------------------------------------------	
   OCL_CHECK(err, cl::Program program(context, devices, bins, NULL, &err));
+  delete[] fileBuf; // delete now, why wait any longer
 
 // -------------------------------------------------------------
 // Step 1: Create Kernels
@@ -119,17 +126,14 @@ int main(int argc, char** argv)
   std::vector<cl::Event> device_2_host_Wait;
   cl::Event host_2_device_Done, krnl_Done, device_2_host_Done;
 
-  printf("\n Total Data of %2.3f Mbytes to be written to global memory from host\n ", (float) vector_size_bytes/1024/1024);
-  printf("\n Kernel is invoked %zu time and repeats iteself %d times \n\n", numIter, krnl_loop);
-
 
   double kernel_time_in_sec = 0, result = 0;
   std::chrono::duration<double> kernel_time(0);
-  std::chrono::duration<double> kernel_time1(0);
 
-  auto kernel_start = std::chrono::high_resolution_clock::now();
+//  auto kernel_start = std::chrono::high_resolution_clock::now();
 
   for (size_t j = 0; j < numIter; j++) {
+    std::cout << "- host loop iteration #" << j << " of " << numIter << " total iterations" << std::endl;
 
     OCL_CHECK(err, buffer_in1[j] = cl::Buffer(context,CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, vector_size_bytes/numIter, &source_in1[j*total_data_size/numIter], &err));
     OCL_CHECK(err, buffer_output[j] = cl::Buffer(context,CL_MEM_USE_HOST_PTR | CL_MEM_WRITE_ONLY, vector_size_bytes/numIter, &source_hw_results[j*total_data_size/numIter], &err));
@@ -146,22 +150,29 @@ int main(int argc, char** argv)
 
     OCL_CHECK(err, err = q.enqueueMigrateMemObjects({buffer_in1[j], buffer_in2[j]},0/* 0 means from host*/));	
 	
+    q.finish();
+    auto kernel_start = std::chrono::high_resolution_clock::now();
     OCL_CHECK(err, err = q.enqueueTask(krnl_vector_add));
+    q.finish();
+    auto kernel_end = std::chrono::high_resolution_clock::now();
+    kernel_time += std::chrono::duration<double>(kernel_end - kernel_start);
 	
     OCL_CHECK(err, err = q.enqueueMigrateMemObjects({buffer_output[j]},CL_MIGRATE_MEM_OBJECT_HOST));
  
   }
   q.finish();
-  auto kernel_end = std::chrono::high_resolution_clock::now();
-  kernel_time = std::chrono::duration<double>(kernel_end - kernel_start);
+//  auto kernel_end = std::chrono::high_resolution_clock::now();
+//  kernel_time = std::chrono::duration<double>(kernel_end - kernel_start);
   kernel_time_in_sec = kernel_time.count();
+  std::cout << "kernel_time_in_sec = " << kernel_time_in_sec << std::endl;
 
   // Compare the results of the Device to the simulation
   bool match = true;
   for (size_t i = 0 ; i < total_data_size ; i++){
-    if (source_hw_results[i] != source_sw_results[i]){
+    int source_sw_results = source_in1[i] + source_in2[i];
+    if (source_hw_results[i] != source_sw_results){
       std::cout << "Error: Result mismatch" << std::endl;
-      std::cout << "i = " << i << " CPU result = " << source_sw_results[i]
+      std::cout << "i = " << i << " CPU result = " << source_sw_results
                 << " Device result = " << source_hw_results[i] << std::endl;
       match = false;
       break;
@@ -171,7 +182,7 @@ int main(int argc, char** argv)
 // ============================================================================
 // Step 3: Release Allocated Resources
 // ============================================================================
-  delete[] fileBuf;
+//  delete[] fileBuf;
 
   // Multiplying the actual data size by 4 because four buffers are being
   // used.
@@ -179,7 +190,6 @@ int main(int argc, char** argv)
   result /= 1024;               // to KB
   result /= 1024;               // to MB
   result /= 1024;               // to GB
-  std::cout << "kernel_time_in_sec = " << kernel_time_in_sec << std::endl;
 
   result /= kernel_time_in_sec; // to GBps
   std::cout << "Throughput Achived = " << result << " GB/s" << std::endl;

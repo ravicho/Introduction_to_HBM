@@ -17,9 +17,9 @@ _OVERLAP = _overlap
 endif
 
 
-ifeq ($(ADDRNDM),1)
-_ADDRNDM = _addRndm
-endif
+#ifeq ($(ADDRNDM),1)
+#_ADDRNDM = _addRndm
+#endif
 
 DWORDS     := 16
 _DWORDS    := _d512
@@ -35,7 +35,8 @@ endif
 
 # Default Settings here ..
 HOST_SRC_CPP := $(SRCDIR)/host.cpp
-BUILDDIR := ./../build/$(MEMTYPE)_banks$(BANKS)$(_OVERLAP)$(_ADDRNDM)$(_DWORDS)
+#BUILDDIR := ./../build/$(MEMTYPE)_banks$(BANKS)$(_OVERLAP)$(_ADDRNDM)$(_DWORDS)
+BUILDDIR := ./../build/$(MEMTYPE)_banks$(BANKS)$(_OVERLAP)$(_DWORDS)
 
 
 # Common Source Code for FPGA and Host
@@ -53,6 +54,7 @@ VPP := v++
 SDCARD := sd_card
 
 include common.mk
+include create_config.mk
 
 #####################################################################################################
 ### Build the host executable. This step is always executed
