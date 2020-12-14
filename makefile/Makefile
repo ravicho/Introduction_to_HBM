@@ -35,8 +35,8 @@ endif
 
 # Default Settings here ..
 HOST_SRC_CPP := $(SRCDIR)/host.cpp
-#BUILDDIR := ./../build/$(MEMTYPE)_banks$(BANKS)$(_OVERLAP)$(_ADDRNDM)$(_DWORDS)
-BUILDDIR := ./../build/$(MEMTYPE)_banks$(BANKS)$(_OVERLAP)$(_DWORDS)
+#BUILDDIR := ./../build/$(MEMTYPE)_Banks$(BANKS)$(_OVERLAP)$(_ADDRNDM)$(_DWORDS)
+BUILDDIR := ./../build/$(MEMTYPE)_Banks$(BANKS)$(_OVERLAP)$(_DWORDS)
 
 
 # Common Source Code for FPGA and Host
@@ -72,8 +72,10 @@ build: compile_host ./$(BUILDDIR)/vadd_$(TARGET).xclbin $(BUILDDIR)/$(EMCONFIG_F
 
 ifeq ($(BUILDXCLBIN), 0)
 run:  host 
+	echo " Nothing to be built here" 
 else
 run:   build host
+	echo " xclbin o be built here" 
 endif
 	cp xrt.ini $(BUILDDIR)
 ifeq ($(TARGET), hw)
@@ -86,19 +88,26 @@ else
 endif
 
 ddr_addSeq:
-	make run TARGET=hw MEMTYPE=DDR DSIZE=600 ADDRNDM=0 KRNL_LOOP=1 BUILDXCLBIN=1
-hbm_addSeq_banks_2:
-	make run TARGET=hw MEMTYPE=HBM BANKS=2 DSIZE=600 ADDRNDM=0 KRNL_LOOP=1 BUILDXCLBIN=1
-hbm_addSeq_banks_3:
-	make run TARGET=hw MEMTYPE=HBM BANKS=3 DSIZE=600 ADDRNDM=0 KRNL_LOOP=1 BUILDXCLBIN=1
-hbm_addSeq_banks_2_overlap:
-	make run TARGET=hw MEMTYPE=HBM BANKS=2 DSIZE=384 ADDRNDM=0 KRNL_LOOP=1 BUILDXCLBIN=1 OVERLAP_BANKS=1
-hbm_addSeq_banks_all:
-	make run TARGET=hw MEMTYPE=HBM BANKS=all DSIZE=600 ADDRNDM=0 KRNL_LOOP=1 BUILDXCLBIN=1
+	make run TARGET=hw MEMTYPE=DDR DSIZE=600 ADDRNDM=0 KRNL_LOOP=1 BUILDXCLBIN=1 BUILDDIR=ddr_addSeq
 ddr_addRandom:
-	make run TARGET=hw MEMTYPE=DDR DSIZE=256 ADDRNDM=1 KRNL_LOOP=1 BUILDXCLBIN=1
+	make run TARGET=hw MEMTYPE=DDR DSIZE=256 ADDRNDM=1 KRNL_LOOP=1 BUILDXCLBIN=1 BUILDDIR=ddr_addRandom
+hbm_addSeq_2Banks:
+	make run TARGET=hw MEMTYPE=HBM BANKS=2 DSIZE=600 ADDRNDM=0 DWIDTH=512 KRNL_LOOP=1 BUILDXCLBIN=1 BUILDDIR=hbm_addSeq_2Banks
+hbm_addSeq_3Banks:
+	make run TARGET=hw MEMTYPE=HBM BANKS=3 DSIZE=600 ADDRNDM=0 DWIDTH=512 KRNL_LOOP=1 BUILDXCLBIN=1 BUILDDIR=hbm_addSeq_3Banks
+hbm_addSeq_2Banks_overlap:
+	make run TARGET=hw MEMTYPE=HBM BANKS=2 DSIZE=600 ADDRNDM=0 DWIDTH=512 KRNL_LOOP=1 BUILDXCLBIN=1 OVERLAP_BANKS=1 BUILDDIR=hbm_addSeq_2Banks_overlap
 hbm_addRandom:
-	make run TARGET=hw MEMTYPE=HBM DSIZE=256 ADDRNDM=1 KRNL_LOOP=1 BUILDXCLBIN=1
+	make run TARGET=hw MEMTYPE=HBM BANKS=all DSIZE=600 ADDRNDM=1 DWIDTH=512 KRNL_LOOP=1 BUILDXCLBIN=1 BUILDDIR=hbm_addRandom
+
+hbm_addSeq_allBanks_d512:
+	make run TARGET=hw MEMTYPE=HBM BANKS=all DSIZE=600 ADDRNDM=0 DWIDTH=512 KRNL_LOOP=1 BUILDXCLBIN=1 BUILDDIR=hbm_addSeq_allBanks_d512
+hbm_addSeq_allBanks_d256:
+	make run TARGET=hw MEMTYPE=HBM BANKS=all DSIZE=600 ADDRNDM=0 DWIDTH=256 KRNL_LOOP=1 BUILDXCLBIN=1 BUILDDIR=hbm_addSeq_allBanks_d256
+hbm_addSeq_allBanks_d128:
+	make run TARGET=hw MEMTYPE=HBM BANKS=all DSIZE=600 ADDRNDM=0 DWIDTH=128 KRNL_LOOP=1 BUILDXCLBIN=1 BUILDDIR=hbm_addSeq_allBanks_d128
+hbm_addSeq_allBanks_d64:
+	make run TARGET=hw MEMTYPE=HBM BANKS=all DSIZE=600 ADDRNDM=0 DWIDTH=64 KRNL_LOOP=1 BUILDXCLBIN=1 BUILDDIR=hbm_addSeq_allBanks_d64
 
 help:
 	@echo  " "
@@ -119,9 +128,12 @@ help:
 	@echo  " "
 	@echo  "   > For using DDR with Sequential Address Access -- make ddr_addSeq "
 	@echo  "   > For using DDR with Random     Address Access -- make ddr_addRandom"
-	@echo  "   > For using HBM with Sequential Address Access -- make hbm_addSeq_banks_2         - This should error out as only 2 banks used and data xfer is > 512M"
-	@echo  "   > For using HBM with Sequential Address Access -- make hbm_addSeq_banks_3         - This should PASS as kernel is not constraint to just 2 banks"
-	@echo  "   > For using HBM with Sequential Address Access -- make hbm_addSeq_overlap_banks_2 - This enables configuration with overlapping banks"
-	@echo  "   > For using HBM with Sequential Address Access -- make hbm_addSeq_banks_all       - This enables configuration with overlapping banks"
+	@echo  "   > For using HBM with Sequential Address Access -- make hbm_addSeq_2Banks         - This should error out as only 2 Banks used and data xfer is > 512M"
+	@echo  "   > For using HBM with Sequential Address Access -- make hbm_addSeq_3Banks         - This should PASS as kernel is not constraint to just 2 Banks"
+	@echo  "   > For using HBM with Sequential Address Access -- make hbm_addSeq_2Banks_overlap - This enables configuration with overlapping Banks"
+	@echo  "   > For using HBM with Sequential Address Access -- make hbm_addSeq_allBanks_d512  - This enables configuration with all Banks using datawidth=512"
+	@echo  "   > For using HBM with Sequential Address Access -- make hbm_addSeq_allBanks_d256  - This enables configuration with all Banks using datawidth=256"
+	@echo  "   > For using HBM with Sequential Address Access -- make hbm_addSeq_allBanks_d128  - This enables configuration with all Banks using datawidth=128"
+	@echo  "   > For using HBM with Sequential Address Access -- make hbm_addSeq_allBanks_d64  - This enables configuration with all Banks using datawidth=64"
 	@echo  "   > For using HBM with Random     Address Access -- make hbm_addRandom "
 

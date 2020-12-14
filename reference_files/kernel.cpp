@@ -35,10 +35,6 @@ Description:
 *******************************************************************************/
 
 
-//#define BUFFER_SIZE 1024
-//#define VDATA_SIZE 16
-//typedef struct v_datatype { unsigned int data[VDATA_SIZE]; } v_dt;
-
 #include "kernel.h"
 #include <ap_int.h>
 
@@ -82,8 +78,8 @@ void vadd(
     const unsigned int num_times,  // Running the same kernel operations num_times
     bool addRandom                 // Address Pattern is random
     ) {
-#pragma HLS INTERFACE m_axi port = in1 offset = slave bundle = gmem0 latency = 300 num_read_outstanding = 64
-#pragma HLS INTERFACE m_axi port = in2 offset = slave bundle = gmem1 latency = 300 num_read_outstanding = 64
+#pragma HLS INTERFACE m_axi port = in1 offset = slave bundle = gmem0 latency = 300 num_read_outstanding = 64 max_read_burst_length=64 max_write_burst_length=64
+#pragma HLS INTERFACE m_axi port = in2 offset = slave bundle = gmem1 latency = 300 num_read_outstanding = 64 max_read_burst_length=64 max_write_burst_length=64
 #pragma HLS INTERFACE m_axi port = out offset = slave bundle = gmem2 // latency = 64
 
 #pragma HLS INTERFACE s_axilite port = in1 bundle = control

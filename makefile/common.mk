@@ -1,5 +1,6 @@
 
 ./$(BUILDDIR)/vadd_$(TARGET).xo: $(HOST_SRC_FPGA)
+	@echo "Running target to generate xo file"
 	v++ -c -g -t $(TARGET) -R 1 -k vadd \
 		--platform $(PLATFORM) \
                 --profile.data all:all:all \
@@ -16,6 +17,7 @@
 
 #./$(BUILDDIR)/vadd_$(TARGET).xclbin:
 ./$(BUILDDIR)/vadd_$(TARGET).xclbin: ./$(BUILDDIR)/vadd_$(TARGET).xo
+	@echo "Running target to generate xclbin file"
 	v++ -l -g -t $(TARGET) -R 1 \
 		--platform $(PLATFORM) \
                 --profile.data all:all:all \
@@ -30,6 +32,7 @@
 		-o ./$(BUILDDIR)/vadd_$(TARGET).xclbin
 
 host: $(SRCDIR)/*.cpp 
+	@echo "Running target to generate host.exe file"
 	mkdir -p $(BUILDDIR)
 	g++ -D__USE_XOPEN2K8 -D__USE_XOPEN2K8 \
 		-I$(XILINX_XRT)/include/ \
