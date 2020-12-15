@@ -37,6 +37,7 @@ Description:
 
 #include "kernel.h"
 #include <ap_int.h>
+#include <iostream>
 
 // TRIPCOUNT identifier
 const unsigned int c_vSize = VDATA_SIZE;
@@ -108,6 +109,7 @@ main_loop:
     //Per iteration of this loop perform vSize vector addition
     Loop_rndm: for (int i = 0; i < vSize; i++) {
       #pragma HLS LOOP_TRIPCOUNT min = c_vSize max = c_vSize
+      seed = minRand(31, 0);
       in_index =  seed % vSize;
       tmpIn1 = in1[in_index];
       tmpIn2 = in2[in_index];
@@ -116,6 +118,7 @@ main_loop:
         for (int k = 0; k < VDATA_SIZE; k++) {
           tmpOutAdd.data[k] = tmpIn1.data[k] + tmpIn2.data[k];
         }
+//std::cout << "In_index " << std::hex << in_index << std::endl;
 
         out[in_index] = tmpOutAdd;
       }
