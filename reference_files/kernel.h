@@ -1,4 +1,4 @@
-#define VDATA_SIZE 16
+#define VDATA_SIZE DATA_ELEMENTS
 
 // TRIPCOUNT indentifier
 const unsigned int c_dt_size = VDATA_SIZE;

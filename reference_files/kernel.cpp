@@ -108,7 +108,7 @@ main_loop:
     //Per iteration of this loop perform vSize vector addition
     Loop_rndm: for (int i = 0; i < vSize; i++) {
       #pragma HLS LOOP_TRIPCOUNT min = c_vSize max = c_vSize
-      in_index = addRandom ? (seed % size) : i;
+      in_index =  seed % vSize;
       tmpIn1 = in1[in_index];
       tmpIn2 = in2[in_index];
 
