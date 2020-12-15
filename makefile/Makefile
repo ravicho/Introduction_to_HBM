@@ -75,7 +75,7 @@ run:  host
 	echo " Nothing to be built here" 
 else
 run:   build host
-	echo " xclbin o be built here" 
+	echo " xclbin to be built here $(DWIDTH) $(DWORDS)" 
 endif
 	cp xrt.ini $(BUILDDIR)
 ifeq ($(TARGET), hw)
@@ -101,13 +101,13 @@ hbm_addRandom:
 	make run TARGET=hw MEMTYPE=HBM BANKS=all DSIZE=600 ADDRNDM=1 DWIDTH=512 KRNL_LOOP=1 BUILDXCLBIN=1 BUILDDIR=hbm_addRandom
 
 hbm_addSeq_allBanks_d512:
-	make run TARGET=hw MEMTYPE=HBM BANKS=all DSIZE=600 ADDRNDM=0 DWIDTH=512 KRNL_LOOP=1 BUILDXCLBIN=1 BUILDDIR=hbm_addSeq_allBanks_d512
+	make run TARGET=hw MEMTYPE=HBM BANKS=all DSIZE=600 ADDRNDM=0 DWIDTH=512 KRNL_LOOP=1 BUILDXCLBIN=1 BUILDDIR=../build/hbm_addSeq_allBanks_d512
 hbm_addSeq_allBanks_d256:
-	make run TARGET=hw MEMTYPE=HBM BANKS=all DSIZE=600 ADDRNDM=0 DWIDTH=256 KRNL_LOOP=1 BUILDXCLBIN=1 BUILDDIR=hbm_addSeq_allBanks_d256
+	make run TARGET=hw MEMTYPE=HBM BANKS=all DSIZE=600 ADDRNDM=0 DWIDTH=256 KRNL_LOOP=1 BUILDXCLBIN=1 BUILDDIR=../build/hbm_addSeq_allBanks_d256
 hbm_addSeq_allBanks_d128:
-	make run TARGET=hw MEMTYPE=HBM BANKS=all DSIZE=600 ADDRNDM=0 DWIDTH=128 KRNL_LOOP=1 BUILDXCLBIN=1 BUILDDIR=hbm_addSeq_allBanks_d128
+	make run TARGET=hw MEMTYPE=HBM BANKS=all DSIZE=600 ADDRNDM=0 DWIDTH=128 KRNL_LOOP=1 BUILDXCLBIN=1 BUILDDIR=../build/hbm_addSeq_allBanks_d128
 hbm_addSeq_allBanks_d64:
-	make run TARGET=hw MEMTYPE=HBM BANKS=all DSIZE=600 ADDRNDM=0 DWIDTH=64 KRNL_LOOP=1 BUILDXCLBIN=1 BUILDDIR=hbm_addSeq_allBanks_d64
+	make run TARGET=hw MEMTYPE=HBM BANKS=all DSIZE=600 ADDRNDM=0 DWIDTH=64 KRNL_LOOP=1 BUILDXCLBIN=1 BUILDDIR=../build/hbm_addSeq_allBanks_d64
 
 help:
 	@echo  " "
