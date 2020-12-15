@@ -31,6 +31,10 @@ ifeq ($(DWIDTH), 128)
 DWORDS   = 4
 _DWORDS   = _d128
 endif
+ifeq ($(DWIDTH), 64)
+DWORDS   = 2
+_DWORDS   = _d64
+endif
 
 
 # Default Settings here ..
