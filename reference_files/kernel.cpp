@@ -101,46 +101,42 @@ void vadd(
 
 // Running same kernel operation num_times to keep the kernel busy for HBM
 // bandwidth testing
-L_vops:
+main_loop:
   for (int count = 0; count < num_times; count++) {
-  #pragma HLS LOOP_TRIPCOUNT min = c_total max = c_total
-if (addRandom)  {
+    #pragma HLS LOOP_TRIPCOUNT min = c_total max = c_total
+    if (addRandom)  {
     //Per iteration of this loop perform vSize vector addition
-  vops1_seq:
-    for (int i = 0; i < vSize; i++) {
+    Loop_rndm: for (int i = 0; i < vSize; i++) {
       #pragma HLS LOOP_TRIPCOUNT min = c_vSize max = c_vSize
-      seed = minRand(31, 0);
       in_index = addRandom ? (seed % size) : i;
       tmpIn1 = in1[in_index];
       tmpIn2 = in2[in_index];
 
-    vops2_seq:
-      for (int k = 0; k < VDATA_SIZE; k++) {
-        tmpOutAdd.data[k] = tmpIn1.data[k] + tmpIn2.data[k];
+      vector_rndm:
+        for (int k = 0; k < VDATA_SIZE; k++) {
+          tmpOutAdd.data[k] = tmpIn1.data[k] + tmpIn2.data[k];
+        }
+
+        out[in_index] = tmpOutAdd;
       }
-
-      out[in_index] = tmpOutAdd;
     }
-}
-else {
-    //Per iteration of this loop perform vSize vector addition
-  vops1_rndm:
-    for (int i = 0; i < vSize; i++) {
-      #pragma HLS LOOP_TRIPCOUNT min = c_vSize max = c_vSize
-      seed = minRand(31, 0);
-      in_index = i;
-      tmpIn1 = in1[in_index];
-      tmpIn2 = in2[in_index];
+    else {
+      //Per iteration of this loop perform vSize vector addition
+      Loop_seq: for (int i = 0; i < vSize; i++) {
+        #pragma HLS LOOP_TRIPCOUNT min = c_vSize max = c_vSize
+        in_index = i;
+        tmpIn1 = in1[in_index];
+        tmpIn2 = in2[in_index];
 
-    vops2_rndm:
-      for (int k = 0; k < VDATA_SIZE; k++) {
-        tmpOutAdd.data[k] = tmpIn1.data[k] + tmpIn2.data[k];
+      vector_seq:
+        for (int k = 0; k < VDATA_SIZE; k++) {
+          tmpOutAdd.data[k] = tmpIn1.data[k] + tmpIn2.data[k];
+        }
+
+        out[in_index] = tmpOutAdd;
       }
-
-      out[in_index] = tmpOutAdd;
     }
-}
-}
+  }
 }
 }
 
