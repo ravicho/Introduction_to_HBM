@@ -40,16 +40,14 @@ Description:
 #include <iostream>
 
 // TRIPCOUNT identifier
-const unsigned int c_vSize = VDATA_SIZE;
+const unsigned int c_loop = VDATA_SIZE;
 const unsigned int c_total = 600/VDATA_SIZE;
 
+unsigned int minRand(void) {
+// 32 bits LFSR with taps at 32,22,2,1, as per table 3 of XAPP 052
+// https://www.xilinx.com/support/documentation/application_notes/xapp052.pdf
+  static ap_uint<32> lfsr=0x12345678; // initialize to non-zero value!
 
-
-unsigned int minRand(unsigned int seed, int load) {
-  static ap_uint<32> lfsr;
-
-  if (load == 1)
-    lfsr = seed;
   bool b_32 = lfsr.get_bit(32 - 32);
   bool b_22 = lfsr.get_bit(32 - 22);
   bool b_2 = lfsr.get_bit(32 - 2);
@@ -60,6 +58,30 @@ unsigned int minRand(unsigned int seed, int load) {
 
   return lfsr.to_uint();
 }
+
+
+/*
+ * generates a "all 1's" mask that is strictly smaller than the input value,
+ * e.g. :
+ * gen_mask(126) -> 63
+ * gen_mask(127) -> 63
+ * gen_mask(128) -> 127
+ * gen_mask(129) -> 127
+ * 
+ * we will use this mask to clear the higher bits of the PRNG so that what 
+ * is left if of the same magnitude of the size, but smaller
+*/
+unsigned int gen_mask(unsigned int x) {
+    unsigned int mask=0xffffffff;
+gmask:
+    do {
+        #pragma HLS LOOP_TRIPCOUNT min = 1 max = 32
+        mask=mask>>1;
+    } while(mask>=x);
+    return mask;
+}
+
+
 
 /*
     Vector Addition Kernel Implementation 
@@ -91,14 +113,15 @@ void vadd(
 #pragma HLS INTERFACE s_axilite port = num_times bundle = control
 #pragma HLS INTERFACE s_axilite port = return bundle = control
 
-  int in_index = 1;
+  int in_index = 0;
   unsigned int seed = 1;
-  unsigned int vSize = ((size - 1) / VDATA_SIZE) + 1;
+  //unsigned int vSize = ((size - 1) / VDATA_SIZE) + 1;
+  unsigned int vSize = size / VDATA_SIZE;
+  unsigned int mask = gen_mask(vSize);
 
   v_dt tmpIn1, tmpIn2;
   v_dt tmpOutAdd;
 
-  minRand(16807, 1);
 
 // Running same kernel operation num_times to keep the kernel busy for HBM
 // bandwidth testing
@@ -108,9 +131,15 @@ main_loop:
     if (addRandom)  {
     //Per iteration of this loop perform vSize vector addition
     Loop_rndm: for (int i = 0; i < vSize; i++) {
-      #pragma HLS LOOP_TRIPCOUNT min = c_vSize max = c_vSize
-      seed = minRand(31, 0);
-      in_index =  seed % vSize;
+      #pragma HLS LOOP_TRIPCOUNT min = c_loop max = c_loop
+      // mask is less than vSize by construct, so randvalue will be too
+      unsigned int randvalue = minRand() & mask;
+      unsigned int candidate = in_index + randvalue; // less than 2x vSize
+      // need to make sure it is strictly less than vSize
+      // note: don't need a modulo operator because of the above masking and derived constraints
+      unsigned int in_index_random = candidate < vSize ? candidate : candidate-vSize;
+      in_index = in_index_random ;
+
       tmpIn1 = in1[in_index];
       tmpIn2 = in2[in_index];
 
@@ -126,7 +155,7 @@ main_loop:
     else {
       //Per iteration of this loop perform vSize vector addition
       Loop_seq: for (int i = 0; i < vSize; i++) {
-        #pragma HLS LOOP_TRIPCOUNT min = c_vSize max = c_vSize
+        #pragma HLS LOOP_TRIPCOUNT min = c_loop max = c_loop
         in_index = i;
         tmpIn1 = in1[in_index];
         tmpIn2 = in2[in_index];
